@@ -43,12 +43,13 @@ class BDHRecurrent(nn.Module):
         core_cfg = bdh_core.BDHConfig(
             n_layer=cfg.n_layer,
             n_embd=cfg.n_embd,
-            dropout=cfg.dropout,
+            dropout=0.0,  # No dropout during inference
             n_head=cfg.n_head,
             mlp_internal_dim_multiplier=cfg.mlp_internal_dim_multiplier,
             vocab_size=cfg.vocab_size,
         )
         self.core = bdh_core.BDH(core_cfg).to(self.device)
+        self.core.eval()  # Set to eval mode for inference
         self.tokenizer = BytesTokenizer()
 
         D = cfg.n_embd
@@ -76,6 +77,9 @@ class BDHRecurrent(nn.Module):
         Ingest a chunk, update global and character states, return projected embedding.
         """
         ids = self.tokenizer.encode(text).unsqueeze(0).to(self.device)  # (1, T)
+        # Truncate to max 512 tokens for speed
+        if ids.shape[1] > 512:
+            ids = ids[:, :512]
         hidden = self.core.encode(ids)  # (1, T, D)
         # Use last token representation as chunk embedding
         emb = hidden[:, -1, :].squeeze(0)  # (D)
@@ -92,6 +96,9 @@ class BDHRecurrent(nn.Module):
     @torch.no_grad()
     def embed_claim(self, text: str) -> torch.Tensor:
         ids = self.tokenizer.encode(text).unsqueeze(0).to(self.device)
+        # Truncate to max 256 tokens for claims
+        if ids.shape[1] > 256:
+            ids = ids[:, :256]
         hidden = self.core.encode(ids)
         emb = hidden[:, -1, :].squeeze(0)
         return self.proj(emb)

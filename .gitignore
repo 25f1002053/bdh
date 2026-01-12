@@ -6,7 +6,6 @@ __pycache__/
 .idea/
 .DS_Store
 .venv/
-outputs/
 *.pkl
 *.json
 *.csv.bak

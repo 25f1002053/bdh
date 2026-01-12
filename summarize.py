@@ -14,29 +14,11 @@ def _groq_client():
 
 
 def summarize_chunks(chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Generate 1-2 line summaries for each chunk using Groq if available, else fallback."""
-    client = _groq_client()
+    """Generate 1-2 line summaries for each chunk using fast heuristic fallback."""
     out = []
     for ch in chunks:
         raw = ch["raw_text"]
-        if client:
-            try:
-                prompt = (
-                    "Summarize the following novel excerpt in 1-2 concise sentences, "
-                    "keeping chronological order and naming main characters if present.\n\n"
-                    f"Excerpt:\n{raw}\n\nSummary:"
-                )
-                resp = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama-3.1-8b-instant",
-                    temperature=0.3,
-                    max_tokens=64,
-                )
-                summary = resp.choices[0].message.content.strip()
-            except Exception:
-                summary = _fallback_summary(raw)
-        else:
-            summary = _fallback_summary(raw)
+        summary = _fallback_summary(raw)
         out.append({**ch, "summary": summary})
     return out
 

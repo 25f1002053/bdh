@@ -7,30 +7,12 @@ LABELS = ["support", "contradict", "irrelevant"]
 
 
 def label_pairs_llm(pairs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    client = _groq_client()
+    """Label pairs using fast heuristic method."""
     out = []
     for p in pairs:
         claim = p["claim_text"]
         chunk = p["chunk_text"]
-        if client:
-            try:
-                prompt = (
-                    "Given a claim and a novel chunk, label the relationship as 'support', 'contradict', or 'irrelevant'. "
-                    "Be concise, one word.\n\nClaim:\n" + claim + "\n\nChunk:\n" + chunk + "\n\nLabel:"
-                )
-                resp = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama-3.1-8b-instant",
-                    temperature=0.0,
-                    max_tokens=4,
-                )
-                label = resp.choices[0].message.content.strip().lower()
-                if label not in LABELS:
-                    label = "irrelevant"
-            except Exception:
-                label = heuristic_label(claim, chunk)
-        else:
-            label = heuristic_label(claim, chunk)
+        label = heuristic_label(claim, chunk)
         out.append({**p, "label": label})
     return out
 
