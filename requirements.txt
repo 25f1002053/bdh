@@ -1,3 +1,7 @@
 torch
 numpy
 requests
+groq
+scikit-learn
+spacy
+python-dotenv
